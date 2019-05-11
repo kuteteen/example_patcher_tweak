@@ -1,0 +1,9 @@
+Package: com.examplepatcher.tweak
+Name: example_patcher_tweak
+Depends: mobilesubstrate
+Version: 1.0
+Architecture: iphoneos-arm
+Description: An example theos tweak for making simple patches with toggles for beginners.
+Maintainer: Ruit
+Author: Ruit
+Section: Tweaks
