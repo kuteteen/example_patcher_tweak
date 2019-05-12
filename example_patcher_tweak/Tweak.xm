@@ -7,10 +7,14 @@
 dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, x * NSEC_PER_SEC); \
 dispatch_after(popTime, dispatch_get_main_queue(), ^(void) f)
 
+#define STARTING_TAG 0x7777
+// vector variable to hold our added subviews tags
+static std::vector<int> _vSubViewsTags;
+
 
 // map variable to handle patches
 static std::map <std::string, MemoryPatch> _patchesMap;
-static void InitializePatchesMap()
+static void createPatchesMap()
 {
   /* NULL for base executable */
   /* addresses are zero because this is just an example */
@@ -31,6 +35,7 @@ static UIWindow *getMainWindow()
 
 // simple label with toggle
 static UISwitch *createToggle(CGPoint point, NSString *name) {
+   static int currTag = STARTING_TAG;
    CGRect rect = CGRectMake(point.x, point.y, 210.f, 30.f);
 
    UILabel *label = [[UILabel alloc] initWithFrame:rect];
@@ -40,13 +45,29 @@ static UISwitch *createToggle(CGPoint point, NSString *name) {
    label.numberOfLines = 0;
    label.textColor = [UIColor whiteColor];
    label.backgroundColor = [UIColor clearColor];
+   label.tag = currTag;
    [getMainWindow() addSubview:label];
+   _vSubViewsTags.push_back(currTag);
+
+   currTag++;
 
    UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(CGRectGetMaxX(rect) + 5.f, rect.origin.y, 32.5f, 30.f)];
    sw.onTintColor = [UIColor redColor]; // toggle on state color
+   sw.tag = currTag;
    [getMainWindow() addSubview:sw];
+   _vSubViewsTags.push_back(currTag);
+
+   currTag++;
 
    return sw;
+}
+
+static void removeCreatedSubViews(){
+  for(int i = 0; i < _vSubViewsTags.size(); i++){
+    if([getMainWindow() viewWithTag:_vSubViewsTags[i]] == nil) continue;
+
+    [[getMainWindow() viewWithTag:_vSubViewsTags[i]] removeFromSuperview];
+  }
 }
 
 
@@ -58,14 +79,14 @@ static void __attribute__((constructor)) onLoad()
     float x = 100;
     float y = 100;
 
-     // initialize patches map
-     InitializePatchesMap();
+     // create & initialize patches map
+     createPatchesMap();
 
      // loop through patches map and add toggle for each patch
      for (auto &it : _patchesMap)
      {
        NSString *patch_name = [NSString stringWithUTF8String:it.first.c_str()];
-       [createToggle(CGPointMake(x, y), patch_name) handleControlEvent:^(UISwitch *sw){
+      [createToggle(CGPointMake(x, y), patch_name) handleControlEvent:^(UISwitch *sw){
 	if([sw isOn]){ // toggle is on
              it.second.Modify();
            } else { // off
@@ -82,6 +103,9 @@ static void __attribute__((constructor)) onLoad()
 // library destructor (clean up)
 static void __attribute__((destructor)) onUnload()
 {
+  // remove our created subviews
+  removeCreatedSubViews();
+  
   // loop through patches map and restore each patch
   for (auto &it : _patchesMap)
   {

@@ -1,3 +1,5 @@
+//refs to https://cnbin.github.io/blog/2016/03/16/uibutton-plus-blockde-shi-yong/.
+
 #ifndef UISwitchBlock_h
 #define UISwitchBlock_h
 
